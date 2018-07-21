@@ -4,6 +4,7 @@ use std::ffi::{CStr, CString};
 use std::str;
 use std::ptr;
 use std::os::raw::*;
+use std::mem;
 type size_t = usize;
 
 pub const MECAB_NOR_NODE: i32 = 0;
@@ -117,9 +118,12 @@ pub struct Tagger {
 
 impl Tagger {
     pub fn new<T: Into<Vec<u8>>>(arg: T) -> Tagger {
+        let arg_c = CString::new(arg).unwrap();
+        let arg_ptr = str_to_ptr(&arg_c);
+        mem::forget(arg_c); // FIXME: leaky
         unsafe {
             Tagger {
-                inner: mecab_new2(str_to_ptr(&CString::new(arg).unwrap())),
+                inner: mecab_new2(arg_ptr),
                 input: ptr::null(),
             }
         }
